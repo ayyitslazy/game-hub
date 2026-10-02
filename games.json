@@ -1,0 +1,42 @@
+[
+  {
+    "title": "Elden Ring",
+    "platform": "PC",
+    "status": "finished",
+    "hours": 142,
+    "rating": 10,
+    "notes": "Beat Malenia on attempt 63."
+  },
+  {
+    "title": "Rocket League",
+    "platform": "PC",
+    "status": "playing",
+    "hours": 310,
+    "rating": 8,
+    "notes": "Ranked 2v2 with friends."
+  },
+  {
+    "title": "Hades II",
+    "platform": "Switch",
+    "status": "playing",
+    "hours": 38,
+    "rating": 9,
+    "notes": ""
+  },
+  {
+    "title": "Baldur's Gate 3",
+    "platform": "PC",
+    "status": "backlog",
+    "hours": 6,
+    "rating": null,
+    "notes": "Start a co-op run."
+  },
+  {
+    "title": "Forza Horizon 5",
+    "platform": "Xbox",
+    "status": "finished",
+    "hours": 74,
+    "rating": 8,
+    "notes": ""
+  }
+]

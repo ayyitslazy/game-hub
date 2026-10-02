@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Game Hub</title>
+
+  <!-- Fonts: Chakra Petch for headings and numbers, Atkinson Hyperlegible for everything else -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Chakra+Petch:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ---------- Colors and fonts in one place, so they're easy to change ---------- */
+    :root {
+      --bg: #1B2340;
+      --panel: #242E52;
+      --line: #34406B;
+      --text: #EDEBF5;
+      --muted: #9AA3C7;
+      --accent: #F2C14E;
+      --playing: #5FD3B5;
+      --finished: #8FA8FF;
+      --backlog: #C79BE8;
+      --font-display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+      --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      line-height: 1.5;
+    }
+
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 48px 20px 80px;
+    }
+
+    /* ---------- Header ---------- */
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 6vw, 3.4rem);
+      line-height: 1;
+      margin: 0 0 12px;
+    }
+
+    .summary {
+      color: var(--muted);
+      font-size: 1.1rem;
+      margin: 0 0 32px;
+    }
+    .summary strong {
+      color: var(--accent);
+      font-family: var(--font-display);
+    }
+
+    /* ---------- Filter buttons ---------- */
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .filters button {
+      font: inherit;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 16px;
+      cursor: pointer;
+    }
+    .filters button[aria-pressed="true"] {
+      color: var(--bg);
+      background: var(--accent);
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+    .filters button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* ---------- Game list ---------- */
+    .games {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .game {
+      padding: 18px 0;
+      border-top: 1px solid var(--line);
+    }
+    .game-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+    }
+    .game-title {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin: 0;
+    }
+    .game-hours {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      white-space: nowrap;
+    }
+    .game-hours small {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .game-meta {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin: 4px 0 10px;
+    }
+    .status {
+      font-weight: 700;
+    }
+    .status.playing  { color: var(--playing); }
+    .status.finished { color: var(--finished); }
+    .status.backlog  { color: var(--backlog); }
+
+    /* The hours bar: shows each game's playtime compared to your most-played game */
+    .bar {
+      height: 6px;
+      background: var(--panel);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+    }
+
+    .game-notes {
+      margin: 10px 0 0;
+      font-size: 0.95rem;
+    }
+
+    .message {
+      color: var(--muted);
+      padding: 24px 0;
+      border-top: 1px solid var(--line);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Game Hub</h1>
+    <p class="summary" id="summary">Loading your games…</p>
+
+    <div class="filters" id="filters">
+      <button type="button" data-filter="all" aria-pressed="true">All</button>
+      <button type="button" data-filter="playing" aria-pressed="false">Playing</button>
+      <button type="button" data-filter="finished" aria-pressed="false">Finished</button>
+      <button type="button" data-filter="backlog" aria-pressed="false">Backlog</button>
+    </div>
+
+    <ul class="games" id="games"></ul>
+  </main>
+
+  <script>
+    // All games loaded from games.json end up in this list
+    let allGames = [];
+
+    // Load the data file, then draw the page
+    async function loadGames() {
+      try {
+        const response = await fetch("games.json");
+        if (!response.ok) throw new Error("Couldn't find games.json");
+        allGames = await response.json();
+        showSummary();
+        showGames("all");
+      } catch (error) {
+        document.getElementById("summary").textContent =
+          "Couldn't load games.json. Check that it's in the same folder as index.html and that the JSON is valid.";
+        console.error(error);
+      }
+    }
+
+    // The sentence at the top: total games, hours, and finished count
+    function showSummary() {
+      const totalHours = allGames.reduce((sum, game) => sum + (game.hours || 0), 0);
+      const finished = allGames.filter(game => game.status === "finished").length;
+
+      const summary = document.getElementById("summary");
+      summary.innerHTML = "";
+      summary.append(
+        bold(allGames.length), " games, ",
+        bold(totalHours), " hours played, ",
+        bold(finished), " finished."
+      );
+    }
+
+    // Draw the list, filtered by status ("all" shows everything)
+    function showGames(filter) {
+      const list = document.getElementById("games");
+      list.innerHTML = "";
+
+      const games = allGames
+        .filter(game => filter === "all" || game.status === filter)
+        .sort((a, b) => (b.hours || 0) - (a.hours || 0)); // most-played first
+
+      if (games.length === 0) {
+        const empty = document.createElement("li");
+        empty.className = "message";
+        empty.textContent = "No games here yet. Add one to games.json with this status.";
+        list.append(empty);
+        return;
+      }
+
+      // The most-played game sets the full width of the hours bar
+      const maxHours = Math.max(...allGames.map(game => game.hours || 0), 1);
+
+      for (const game of games) {
+        list.append(makeGameRow(game, maxHours));
+      }
+    }
+
+    // Build one game's row. Using textContent (not innerHTML) keeps the data safe to display.
+    function makeGameRow(game, maxHours) {
+      const row = document.createElement("li");
+      row.className = "game";
+
+      const top = document.createElement("div");
+      top.className = "game-top";
+
+      const title = document.createElement("h2");
+      title.className = "game-title";
+      title.textContent = game.title;
+
+      const hours = document.createElement("span");
+      hours.className = "game-hours";
+      hours.textContent = game.hours || 0;
+      const unit = document.createElement("small");
+      unit.textContent = " hrs";
+      hours.append(unit);
+
+      top.append(title, hours);
+
+      const meta = document.createElement("p");
+      meta.className = "game-meta";
+      const status = document.createElement("span");
+      status.className = "status " + game.status;
+      status.textContent = capitalize(game.status);
+      meta.append(status, ", " + game.platform);
+      if (game.rating) meta.append(", rated " + game.rating + "/10");
+
+      const bar = document.createElement("div");
+      bar.className = "bar";
+      const fill = document.createElement("div");
+      fill.className = "bar-fill";
+      fill.style.width = ((game.hours || 0) / maxHours * 100) + "%";
+      bar.append(fill);
+
+      row.append(top, meta, bar);
+
+      if (game.notes) {
+        const notes = document.createElement("p");
+        notes.className = "game-notes";
+        notes.textContent = game.notes;
+        row.append(notes);
+      }
+
+      return row;
+    }
+
+    // Small helpers
+    function bold(value) {
+      const el = document.createElement("strong");
+      el.textContent = value;
+      return el;
+    }
+    function capitalize(text) {
+      return text ? text[0].toUpperCase() + text.slice(1) : "";
+    }
+
+    // Make the filter buttons work
+    document.getElementById("filters").addEventListener("click", event => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      document.querySelectorAll("#filters button").forEach(b => b.setAttribute("aria-pressed", "false"));
+      button.setAttribute("aria-pressed", "true");
+      showGames(button.dataset.filter);
+    });
+
+    loadGames();
+  </script>
+</body>
+</html>
