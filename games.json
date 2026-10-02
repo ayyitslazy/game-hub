@@ -1,42 +1,42 @@
 [
   {
-    "title": "Elden Ring",
+    "title": "Counter Strike 2",
     "platform": "PC",
-    "status": "finished",
-    "hours": 142,
-    "rating": 10,
-    "notes": "Beat Malenia on attempt 63."
-  },
-  {
-    "title": "Rocket League",
-    "platform": "PC",
-    "status": "playing",
-    "hours": 310,
+    "status": "Playing",
+    "hours": 2069,
     "rating": 8,
-    "notes": "Ranked 2v2 with friends."
+    "notes": "Last played May 23."
   },
   {
-    "title": "Hades II",
-    "platform": "Switch",
+    "title": "Escape From Tarkov",
+    "platform": "PC",
     "status": "playing",
-    "hours": 38,
-    "rating": 9,
-    "notes": ""
+    "hours": 1976,
+    "rating": 10,
+    "notes": "Seasonal Character Lvl 35."
   },
   {
-    "title": "Baldur's Gate 3",
+    "title": "Wardogs",
+    "platform": "PC",
+    "status": "playing",
+    "hours": 72,
+    "rating": 10,
+    "notes": "ADDICTING"
+  },
+  {
+    "title": "Destiny 2",
     "platform": "PC",
     "status": "backlog",
-    "hours": 6,
-    "rating": null,
-    "notes": "Start a co-op run."
+    "hours": 6704,
+    "rating": 10,
+    "notes": "Retired, but not Forgotten."
   },
   {
-    "title": "Forza Horizon 5",
-    "platform": "Xbox",
-    "status": "finished",
-    "hours": 74,
-    "rating": 8,
-    "notes": ""
+    "title": "Marathon",
+    "platform": "PC",
+    "status": "backlog",
+    "hours": 351,
+    "rating": 6,
+    "notes": "Needs major changes for me to play again."
   }
 ]
