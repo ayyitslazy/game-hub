@@ -139,8 +139,27 @@
     }
     .bar-fill {
       height: 100%;
+      width: 0; /* starts empty, then JavaScript sets the real width so it slides in */
       background: var(--accent);
       border-radius: 3px;
+      transition: width 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    /* ---------- Animation ---------- */
+    /* Each row fades up slightly. --delay is set per row in JavaScript so they arrive one after another. */
+    .game {
+      animation: row-in 400ms ease-out both;
+      animation-delay: var(--delay, 0ms);
+    }
+    @keyframes row-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* If someone has "reduce motion" turned on in their device settings, skip the animations */
+    @media (prefers-reduced-motion: reduce) {
+      .game { animation: none; }
+      .bar-fill { transition: none; }
     }
 
     .game-notes {
@@ -174,6 +193,9 @@
     // All games loaded from games.json end up in this list
     let allGames = [];
 
+    // True if the viewer has "reduce motion" turned on in their device settings
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     // Load the data file, then draw the page
     async function loadGames() {
       try {
@@ -201,6 +223,27 @@
         bold(totalHours), " hours played, ",
         bold(finished), " finished."
       );
+
+      // Make each number count up from 0
+      summary.querySelectorAll("strong").forEach(countUp);
+    }
+
+    // Counts a number up from 0 to its final value over about a second
+    function countUp(el) {
+      const target = Number(el.textContent);
+      if (reduceMotion || target === 0) return;
+
+      const duration = 1000;
+      const start = performance.now();
+
+      function step(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3); // fast at first, slows near the end
+        el.textContent = Math.round(target * eased);
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      el.textContent = 0;
+      requestAnimationFrame(step);
     }
 
     // Draw the list, filtered by status ("all" shows everything)
@@ -223,9 +266,20 @@
       // The most-played game sets the full width of the hours bar
       const maxHours = Math.max(...allGames.map(game => game.hours || 0), 1);
 
-      for (const game of games) {
-        list.append(makeGameRow(game, maxHours));
-      }
+      games.forEach((game, index) => {
+        const row = makeGameRow(game, maxHours);
+        row.style.setProperty("--delay", (index * 70) + "ms"); // each row starts a little later
+        list.append(row);
+      });
+
+      // Wait one frame so the bars start at 0, then set their real widths so they slide in
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          list.querySelectorAll(".bar-fill").forEach(fill => {
+            fill.style.width = fill.dataset.width;
+          });
+        });
+      });
     }
 
     // Build one game's row. Using textContent (not innerHTML) keeps the data safe to display.
@@ -261,7 +315,7 @@
       bar.className = "bar";
       const fill = document.createElement("div");
       fill.className = "bar-fill";
-      fill.style.width = ((game.hours || 0) / maxHours * 100) + "%";
+      fill.dataset.width = ((game.hours || 0) / maxHours * 100) + "%"; // saved here, applied after the row is on screen
       bar.append(fill);
 
       row.append(top, meta, bar);
